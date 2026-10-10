@@ -21,7 +21,8 @@ export async function createSession(user: SessionUser) {
     .setExpirationTime("7d")
     .sign(key());
 
-  cookies().set(COOKIE_NAME, token, {
+  const cookieStore = await cookies();
+  cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
@@ -31,7 +32,7 @@ export async function createSession(user: SessionUser) {
 }
 
 export async function getSession(): Promise<SessionUser | null> {
-  const token = cookies().get(COOKIE_NAME)?.value;
+  const token = (await cookies()).get(COOKIE_NAME)?.value;
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, key(), { algorithms: ["HS256"] });
@@ -42,8 +43,9 @@ export async function getSession(): Promise<SessionUser | null> {
   }
 }
 
-export function clearSession() {
-  cookies().set(COOKIE_NAME, "", {
+export async function clearSession() {
+  const cookieStore = await cookies();
+  cookieStore.set(COOKIE_NAME, "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
