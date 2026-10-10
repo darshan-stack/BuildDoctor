@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { analyzeLog } from "@/lib/analyzer";
+import { analyzeLog, sanitizeLog } from "@/lib/analyzer";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
       commitSha: typeof runPayload.head_sha === "string" ? runPayload.head_sha.slice(0, 64) : null,
       status,
       durationMs: runPayload.run_started_at && runPayload.updated_at ? Math.max(0, new Date(runPayload.updated_at).getTime() - new Date(runPayload.run_started_at).getTime()) : null,
-      logText: rawLog,
+      logText: sanitizeLog(rawLog),
       issueCount: analysis.findings.length,
     };
     const issueData = analysis.findings.map((finding) => ({
