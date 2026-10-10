@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ project, webhookSecret: secret, webhookUrl: new URL("/api/webhooks/github", request.url).toString() }, { status: 201 });
   } catch (error) {
     if (typeof error === "object" && error !== null && "code" in error && error.code === "P2002") {
-      return NextResponse.json({ error: "This repository is already connected to your account." }, { status: 409 });
+      return NextResponse.json({ error: "This repository is already registered in BuildDoctor." }, { status: 409 });
     }
     console.error("Create project failed", error);
     return NextResponse.json({ error: "Could not create project." }, { status: 500 });
