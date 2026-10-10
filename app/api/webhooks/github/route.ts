@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     if (!jobsResponse.ok) throw new Error("GitHub jobs API returned " + jobsResponse.status);
     const jobsData = await jobsResponse.json();
     const failedJobs = (jobsData.jobs ?? []).filter((job: any) => job.conclusion === "failure");
-    const selectedJobs = failedJobs.length ? failedJobs : (jobsData.jobs ?? []).slice(0, 5);
+    const selectedJobs = failedJobs.length ? failedJobs : runPayload.conclusion === "success" ? [] : (jobsData.jobs ?? []).slice(0, 5);
     const logParts: string[] = [];
     for (const job of selectedJobs.slice(0, 10)) {
       try {
