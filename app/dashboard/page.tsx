@@ -8,7 +8,8 @@ import {
   Plus, RefreshCw, Search, Settings2, ShieldCheck, Sparkles, Terminal, Trash2,
   Upload, X, Zap
 } from "lucide-react";
-import { useRouter } from "next/navigation";\nimport Link from "next/link";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type User = { id: string; name: string; email: string };
 type Finding = { title: string; severity: string; category: string; file?: string; line?: number; evidence: string; explanation: string; fix: string; command?: string; confidence: number; fingerprint: string };
@@ -19,7 +20,7 @@ type Tab = "overview" | "analyze" | "runs" | "projects";
 
 const SAMPLE_LOG = `$ npm ci
 npm error code EUSAGE
-npm error `npm ci` can only install packages when your package.json and package-lock.json are in sync.
+npm error \`npm ci\` can only install packages when your package.json and package-lock.json are in sync.
 npm error Missing: eslint@9.12.0 from lock file
 npm error Clean install a project
 Error: Process completed with exit code 1.
