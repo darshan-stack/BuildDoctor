@@ -10,7 +10,8 @@
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
@@ -30,6 +31,7 @@
     "typescript": "^5.7.2",
     "prisma": "^6.2.1",
     "@types/bcryptjs": "^2.4.6",
-    "@types/unzipper": "^0.10.10"
+    "@types/unzipper": "^0.10.10",
+    "tsx": "^4.19.2"
   }
 }
