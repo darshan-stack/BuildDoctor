@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 export const runtime = "nodejs";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const user = await getSession();
   if (!user) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
   const run = await prisma.pipelineRun.findFirst({
