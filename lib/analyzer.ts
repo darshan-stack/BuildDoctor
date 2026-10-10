@@ -76,7 +76,7 @@ function getFileAndLine(line: string): { file?: string; line?: number } {
   return match ? { file: match[1], line: match[2] ? Number(match[2]) : undefined } : {};
 }
 
-export function analyzeLog(raw: string): Analysis {
+export function sanitizeLog(raw: string): string {\n  return redact(raw.slice(0, 250_000)).text;\n}\n\nexport function analyzeLog(raw: string): Analysis {
   const started = Date.now();
   const redacted = redact(raw.slice(0, 250_000));
   const lines = redacted.text.split(/\r?\n/);
