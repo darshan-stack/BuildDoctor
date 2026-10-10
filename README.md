@@ -17,7 +17,7 @@
 
 ## Stack
 
-- Next.js 14 App Router, React 18, TypeScript
+- Next.js 15.5 (patched release line) App Router, React 19, TypeScript
 - Custom responsive CSS and Lucide icons
 - PostgreSQL + Prisma ORM
 - Signed JWT session cookie + bcryptjs password hashing
