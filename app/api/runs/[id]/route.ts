@@ -16,7 +16,8 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   return NextResponse.json({ run });
 }
 
-export async function DELETE(_request: Request, context: { params: { id: string } }) {
+export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const user = await getSession();
   if (!user) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
   const result = await prisma.pipelineRun.deleteMany({ where: { id: id, ownerId: user.id } });
