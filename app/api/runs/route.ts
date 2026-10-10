@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { analyzeLog } from "@/lib/analyzer";
+import { analyzeLog, sanitizeLog } from "@/lib/analyzer";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
         workflowName: input.data.workflowName,
         status: analysis.outcome,
         durationMs: analysis.durationMs,
-        logText: input.data.log.slice(0, 250_000),
+        logText: sanitizeLog(input.data.log),
         issueCount: analysis.findings.length,
         issues: { create: analysis.findings.map((finding) => ({
           title: finding.title,
