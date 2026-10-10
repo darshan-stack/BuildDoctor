@@ -175,7 +175,7 @@ export default function Home() {
           <a className="github-link" href="https://github.com/darshan-stack/BuildDoctor" target="_blank" rel="noreferrer">
             <Github size={17} /> <span>Star on GitHub</span>
           </a>
-          <a className="button button-dark button-small" href="#diagnostics">Try the demo <ArrowUpRight size={15} /></a>
+          <a className="button button-dark button-small" href="/login">Open workspace <ArrowUpRight size={15} /></a>
         </div>
         <button className="mobile-menu-button" aria-label={mobileOpen ? "Close menu" : "Open menu"} onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X /> : <Menu />}
