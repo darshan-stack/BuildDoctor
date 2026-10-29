@@ -14,6 +14,7 @@ import Link from "next/link";
 type User = { id: string; name: string; email: string };
 type Finding = { title: string; severity: string; category: string; file?: string; line?: number; evidence: string; explanation: string; fix: string; command?: string; confidence: number; fingerprint: string };
 type Analysis = { summary: string; outcome: string; linesAnalyzed: number; findings: Finding[]; redactionsApplied: number; durationMs: number };
+type ReliabilityInsights = { score: number; grade: "healthy" | "degraded" | "at-risk" | "critical"; headline: string; primaryCategory: string | null; primaryFinding: Finding | null; clusters: { category: string; count: number; highestSeverity: string; titles: string[] }[]; newFingerprints: string[]; recurringFingerprints: string[]; recommendedNextSteps: string[]; executionPolicy: { mode: string; automaticExecutionAllowed: false; reason: string } };
 type Run = { id: string; repository: string; branch: string; commitSha?: string | null; workflowName: string; status: string; durationMs?: number | null; issueCount: number; createdAt: string };
 type Project = { id: string; name: string; fullName: string; defaultBranch: string; createdAt: string; _count?: { runs: number } };
 type Tab = "overview" | "analyze" | "runs" | "projects";
@@ -38,6 +39,7 @@ export default function DashboardPage() {
   const [branch, setBranch] = useState("main");
   const [workflowName, setWorkflowName] = useState("Manual analysis");
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [insights, setInsights] = useState<ReliabilityInsights | null>(null);
   const [runs, setRuns] = useState<Run[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectName, setProjectName] = useState("");
@@ -69,10 +71,10 @@ export default function DashboardPage() {
   async function analyze(event?: FormEvent) {
     event?.preventDefault();
     if (!log.trim()) { setNotice("Paste a build log or load the sample first."); return; }
-    setBusy(true); setNotice(""); setAnalysis(null);
+    setBusy(true); setNotice(""); setAnalysis(null); setInsights(null);
     try {
       const data = await request("/api/runs", { method: "POST", body: JSON.stringify({ log, repository, branch, workflowName }) });
-      setAnalysis(data.analysis); setActiveFinding(0); setTab("analyze");
+      setAnalysis(data.analysis); setInsights(data.insights ?? null); setActiveFinding(0); setTab("analyze");
       await loadData();
       setNotice("Analysis complete and run saved to your workspace.");
     } catch (e) { setNotice(e instanceof Error ? e.message : "Analysis failed."); }
@@ -169,6 +171,7 @@ export default function DashboardPage() {
         {analysis && <section className="analysis-results">
           <div className="analysis-result-header"><div><div className="workspace-eyebrow">ANALYSIS COMPLETE · {analysis.durationMs} MS</div><h2>{analysis.findings.length ? analysis.findings.length + " likely issue" + (analysis.findings.length===1?"":"s") + " found" : "No known failure signature found"}</h2><p>{analysis.summary}</p></div><span className={`workspace-status workspace-status-${analysis.outcome}`}>{analysis.outcome}</span></div>
           <div className="analysis-result-meta"><span><FileText size={14}/> {analysis.linesAnalyzed.toLocaleString()} lines inspected</span><span><ShieldCheck size={14}/> {analysis.redactionsApplied} potential sensitive values redacted</span><span><Clock3 size={14}/> {analysis.durationMs} ms</span></div>
+          {insights && <div className="reliability-panel"><div className="reliability-panel-heading"><div><div className="workspace-eyebrow">RELIABILITY INTELLIGENCE</div><h3>{insights.headline}</h3><p>Deterministic triage score · not an uptime/SLO guarantee</p></div><div className={"reliability-score reliability-score-" + insights.grade}><strong>{insights.score}</strong><span>/ 100</span><small>{insights.grade.replace("-", " ")}</small></div></div><div className="reliability-stats"><div><span>Primary category</span><strong>{insights.primaryCategory ?? "None detected"}</strong></div><div><span>New signatures</span><strong>{insights.newFingerprints.length}</strong></div><div><span>Recurring signatures</span><strong>{insights.recurringFingerprints.length}</strong></div><div><span>Failure clusters</span><strong>{insights.clusters.length}</strong></div></div>{insights.clusters.length > 0 && <div className="reliability-clusters">{insights.clusters.slice(0, 4).map((cluster) => <div className="reliability-cluster" key={cluster.category}><span className={"finding-severity-dot severity-dot-" + cluster.highestSeverity}/><strong>{cluster.category}</strong><span>{cluster.count} finding{cluster.count === 1 ? "" : "s"}</span><small>{cluster.titles.join(" · ")}</small></div>)}</div>}<div className="reliability-next-steps"><strong>Recommended investigation plan</strong><ol>{insights.recommendedNextSteps.map((step, index) => <li key={index}>{step}</li>)}</ol></div><div className="reliability-policy"><ShieldCheck size={15}/><span>Human approval required. BuildDoctor does not automatically execute suggested commands or apply patches.</span></div></div>}
           {analysis.findings.length>0 && <div className="analysis-finding-layout"><div className="analysis-finding-list">{analysis.findings.map((finding,i)=><button key={finding.fingerprint+i} className={`analysis-finding-button ${activeFinding===i?"analysis-finding-active":""}`} onClick={()=>setActiveFinding(i)}><span className={`finding-severity-dot severity-dot-${finding.severity}`}/><span><strong>{finding.title}</strong><small>{finding.category}{finding.file ? " · "+finding.file : ""}</small></span><ArrowUpRight size={14}/></button>)}</div>
           {selectedFinding && <article className="analysis-finding-detail"><div className="finding-detail-top"><span className={`finding-severity-label severity-label-${selectedFinding.severity}`}>{selectedFinding.severity}</span><span className="finding-confidence">{selectedFinding.confidence}% rule confidence</span></div><h3>{selectedFinding.title}</h3><p>{selectedFinding.explanation}</p><div className="finding-evidence"><div><Terminal size={14}/> Matching log evidence</div><pre>{selectedFinding.evidence}</pre></div><div className="finding-fix"><div><Zap size={15}/><strong>Recommended next step</strong></div><p>{selectedFinding.fix}</p>{selectedFinding.command && <div className="finding-command"><code>{selectedFinding.command}</code><button onClick={()=>copy(selectedFinding.command!)} aria-label="Copy command"><Copy size={14}/></button></div>}</div></article>}</div>}
           {analysis.findings.length===0 && <div className="workspace-empty"><CheckCircle2 size={24}/><p>Try another log format or inspect the job's earliest error. No known signature is not the same as a guaranteed successful build.</p></div>}
