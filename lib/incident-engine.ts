@@ -1,4 +1,4 @@
-import type { Finding, Severity } from "@/lib/analyzer";
+import type { Finding, Severity } from "./analyzer";
 
 export type FindingCluster = {
   category: Finding["category"];
