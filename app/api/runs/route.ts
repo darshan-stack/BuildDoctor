@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { analyzeLog, sanitizeLog } from "@/lib/analyzer";
+import { buildReliabilityInsights } from "@/lib/incident-engine";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 
@@ -35,8 +36,18 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
   const input = createSchema.safeParse(await request.json().catch(() => null));
   if (!input.success) return NextResponse.json({ error: input.error.issues[0]?.message ?? "Invalid run input." }, { status: 400 });
+
   const analysis = analyzeLog(input.data.log);
   try {
+    // Compare against earlier findings for this user's same repository only.
+    const previousIssues = await prisma.diagnosticIssue.findMany({
+      where: { run: { ownerId: user.id, repository: input.data.repository } },
+      orderBy: { createdAt: "desc" },
+      take: 1000,
+      select: { fingerprint: true },
+    });
+    const insights = buildReliabilityInsights(analysis.findings, previousIssues.map((issue) => issue.fingerprint));
+
     const run = await prisma.pipelineRun.create({
       data: {
         ownerId: user.id,
@@ -64,7 +75,7 @@ export async function POST(request: Request) {
       },
       include: { issues: true },
     });
-    return NextResponse.json({ run, analysis }, { status: 201 });
+    return NextResponse.json({ run, analysis, insights }, { status: 201 });
   } catch (error) {
     console.error("Save run failed", error);
     return NextResponse.json({ error: "Could not save this run. Verify the database schema is applied." }, { status: 500 });
